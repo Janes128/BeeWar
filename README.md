@@ -12,6 +12,7 @@ it's a assembly language project for school final project. Write by asm x86.
 	4. 超音波障礙
 	5. 血條生命條、分數條
 	6. bonus
+	
 基本功能：
 	1. 主戰蜂王 (nature)
 		-畫出主戰
@@ -36,6 +37,7 @@ it's a assembly language project for school final project. Write by asm x86.
 		    -死亡
 		-顯示血條 (nature.blood)
 ////////////////////////////////////////////////////////////////////////////////////////////
+
 	2. 敵人
 		-畫出敵人
 			enemystruct struct{
@@ -59,6 +61,7 @@ it's a assembly language project for school final project. Write by asm x86.
 			-更新敵人
 			-BOSS出現 (進階)blood 扣血(當偵測到攻擊則  [enemys+?].blood -5  並呼叫顯示血條重新顯示)
 ////////////////////////////////////////////////////////////////////////////////////////////
+
 	3. 開始(選單)與結束介面	(以下設定最好他X的有空做出來)
 		-開始選單，人機互動介面
 			-開始設定
@@ -72,10 +75,12 @@ it's a assembly language project for school final project. Write by asm x86.
 
 		-遊戲中選單(暫停)
 ////////////////////////////////////////////////////////////////////////////////////////////
+
 	4. 遊戲整合師
 		-統合
 
 		-設計PPT
+
 外掛功能：
 	1. 音樂
 	2. 難度調控
