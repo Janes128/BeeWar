@@ -4,7 +4,7 @@ INCLUDE Irvine32.inc
 NatureMain PROTO
 NaturePrint PROTO
 NatureMove PROTO
-NatureAttack PROTO
+NatureAttacks PROTO
 
 NatureBody STRUCT
 	naturelong BYTE 6
@@ -13,13 +13,13 @@ NatureBody STRUCT
 	countnaturex BYTE 0
 	blood BYTE 5
 	picture BYTE "(^..^)",0
-NatureSTRUCT ENDS
+NatureBody ENDS
 
-NatureAttackStruct struct{
+NatureAttackStruct STRUCT
 	x BYTE ?
 	y BYTE ?
 	long BYTE 1
-}
+NatureAttackStruct ENDS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;¥D¾÷«Å§i;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 main  EQU start@0 ;
@@ -131,7 +131,7 @@ NatureMove PROC USES eax ebx esi edi
 	jmp NatureMoveEDN
 
 	SPACE:
-		INVOKE NatureAttack
+		INVOKE NatureAttacks
 		jmp NatureMoveEDN
 	UP:
 		jmp NatureMoveEDN
@@ -153,9 +153,9 @@ NatureMove PROC USES eax ebx esi edi
 NatureMove ENDP
 ;----------------------------NatureAttack
 
-NatureAttack PROC USES eax ebx esi edi
+NatureAttacks PROC USES eax ebx esi edi
 
 	ret
-NatureAttack ENDP
+NatureAttacks ENDP
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;PROC;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 END main
