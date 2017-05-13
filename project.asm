@@ -1,58 +1,111 @@
 INCLUDE Irvine32.inc
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;印出主機;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-CallNature PROTO
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;主機宣告;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+Naturemain PROTO
+Natureprint PROTO
 
 NatureSTRUCT STRUCT
+	naturelong BYTE 6
 	x BYTE 5
 	y BYTE 5
 	blood BYTE 5
-	picture BYTE "1234(^..^)   ",0
+	picture BYTE "(^..^)",0
 NatureSTRUCT ENDS
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;主機宣告;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 main  EQU start@0 ;
 .data
-mainy BYTE "             ",0,"             ",0,"             ",0,"             ",0,"             ",0,"             ",0
+mainy BYTE "1            ",0,"2            ",0,"3            ",0,"4            ",0,"5            ",0,"6            ","123",0
 Nature NatureSTRUCT <>
+countnaturex BYTE 1
 
 .code
 main PROC
 
 mov eax,0
+mov ebx,0
+mov ecx,0
+mov edx,0
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;執行遊戲(迴圈);;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 RUNGAME:
-	cmp eax,50
-	jb eaxless50
+	cmp eax,84
+	jb eaxless84
+	call clrscr		;清空螢幕
 	mov eax,0
-	eaxless50:
+	mov countnaturex,-1
+	eaxless84:
 
-	INVOKE CallNature;呼叫 Str_remove
+	INVOKE Naturemain;呼叫 Str_remove
 
 
 	add eax,14							
+	push eax	;時間暫停術
+	mov eax,200
+	call Delay
+	pop eax
+
 	jmp RUNGAME
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;執行遊戲(迴圈);;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	call WaitMsg
 	exit
 main ENDP
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;PROC;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;----------------------------Naturemain
+Naturemain PROC
+	INVOKE Natureprint
 
-CallNature PROC
-
-	mov edx,OFFSET mainy
-	call WriteString
-	call Crlf
-
-	add edx,eax
-	call WriteString
-	call Crlf
-
-	add edx,eax
-	call WriteString
-	call Crlf
+	mov bl,Nature.x
+	add bl,countnaturex
+	mov Nature.x,bl
 
 	ret
-CallNature ENDP
-END main
+Naturemain ENDP
+;----------------------------Natureprint
+Natureprint PROC
 
-;call clrscr								;清空螢幕
+	push edx
+	push eax
+
+	mov dl,Nature.x
+	mov dh,Nature.y
+	mov  eax, 12 + ( black*16 )			;設定前景為淡紅色，背景為黑色
+	call SetTextColor
+	;
+	call Gotoxy
+	mov  al , "("
+	call Writechar
+	;
+	add dl,1
+	call Gotoxy
+	mov  al , "^"
+	call Writechar
+	;
+	add dl,1
+	call Gotoxy
+	mov  al , "."
+	call Writechar
+	;
+	add dl,1
+	call Gotoxy
+	mov  al , "."
+	call Writechar
+	;
+	add dl,1
+	call Gotoxy
+	mov  al , "^"
+	call Writechar
+	;
+	add dl,1
+	call Gotoxy
+	mov  al , ")"
+	call Writechar
+	;
+
+	pop eax
+	pop edx
+
+	ret
+Natureprint ENDP
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;PROC;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+END main
