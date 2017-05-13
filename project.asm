@@ -4,8 +4,9 @@ INCLUDE Irvine32.inc
 NatureMain PROTO
 NaturePrint PROTO
 NatureMove PROTO
+NatureAttack PROTO
 
-NatureSTRUCT STRUCT
+NatureBody STRUCT
 	naturelong BYTE 6
 	x BYTE 5
 	y BYTE 5
@@ -13,13 +14,20 @@ NatureSTRUCT STRUCT
 	blood BYTE 5
 	picture BYTE "(^..^)",0
 NatureSTRUCT ENDS
+
+NatureAttackStruct struct{
+	x BYTE ?
+	y BYTE ?
+	long BYTE 1
+}
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;主機宣告;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 main  EQU start@0 ;
 .data
-mainy BYTE "1            ",0,"2            ",0,"3            ",0,"4            ",0,"5            ",0,"6            ","123",0
-Nature NatureSTRUCT <>
+;mainy BYTE "1            ",0,"2            ",0,"3            ",0,"4            ",0,"5            ",0,"6            ","123",0
 
+Nature NatureBody <>
+Natureattack NatureAttackStruct <>
 
 .code
 main PROC
@@ -105,7 +113,6 @@ NaturePrint PROC USES eax ecx esi edi
 
 	ret
 NaturePrint ENDP
-
 ;----------------------------NatureMove
 
 NatureMove PROC USES eax ebx esi edi
@@ -115,15 +122,26 @@ NatureMove PROC USES eax ebx esi edi
 	jz   LEFT
 	cmp  eax, 4D00h				;右
 	jz   RIGHT
+	cmp  eax, 4800h				;上
+	jz   UP
+	cmp  eax, 5000h				;下
+	jz   DOWN
+	cmp  eax, 5000h				;空白鍵??????????????????????????????
+	jz	 SPACE
 	jmp NatureMoveEDN
 
+	SPACE:
+		INVOKE NatureAttack
+		jmp NatureMoveEDN
+	UP:
+		jmp NatureMoveEDN
+	DOWN:
+		jmp NatureMoveEDN
 	LEFT:
-		
 		mov bl,Nature.x
 		mov Nature.countnaturex,-1
 		jmp NatureMoveEDN
 	RIGHT:
-
 		mov bl,Nature.x
 		mov Nature.countnaturex,1
 
@@ -133,7 +151,11 @@ NatureMove PROC USES eax ebx esi edi
 		mov Nature.countnaturex,0
 	ret
 NatureMove ENDP
+;----------------------------NatureAttack
 
+NatureAttack PROC USES eax ebx esi edi
 
+	ret
+NatureAttack ENDP
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;PROC;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 END main
