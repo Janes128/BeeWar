@@ -15,19 +15,41 @@ NatureBody STRUCT
 	picture BYTE "(^..^)",0
 NatureBody ENDS
 
+;韋成改NatureAttackStruct
 NatureAttackStruct STRUCT
 	x BYTE ?
 	y BYTE ?
 	long BYTE 1
 NatureAttackStruct ENDS
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;主機宣告;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;主機宣告END;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;敵機宣告;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+EnemyMain PROTO
+EnemyPrint PROTO
+EnemyMove PROTO
+EnemyAttacks PROTO
 
+EnemyBody STRUCT
+	enemylong BYTE 2
+	x BYTE 5
+	y BYTE 0
+	countnaturex BYTE 0
+	blood BYTE 5
+	picture BYTE "**",0
+EnemyBody ENDS
+
+;韋成改EnemyAttackStruct
+EnemyAttackStruct STRUCT
+	x BYTE ?
+	y BYTE ?
+	long BYTE 1
+EnemyAttackStruct ENDS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;敵機宣告END;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 main  EQU start@0 ;
 .data
-;mainy BYTE "1            ",0,"2            ",0,"3            ",0,"4            ",0,"5            ",0,"6            ","123",0
-
 Nature NatureBody <>
-Natureattack NatureAttackStruct <>
+Natureattack NatureAttackStruct <>	;韋成改 (主機放出的物質速度)
+Enemy EnemyBody <>
+Enemyattack EnemyAttackStruct <>;韋成改	(敵機放出的物質速度)
 
 .code
 main PROC
@@ -39,8 +61,8 @@ mov edx,0
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;執行遊戲(迴圈);;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 RUNGAME:
 
-	INVOKE NatureMain;呼叫 Str_remove
-
+	INVOKE NatureMain;
+	INVOKE EnemyMain;
 				
 	push eax	;時間暫停術
 	mov eax,0
@@ -54,7 +76,9 @@ RUNGAME:
 	call WaitMsg
 	exit
 main ENDP
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;PROC;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;函式;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;NaturePROC;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;----------------------------Naturemain
 
@@ -157,5 +181,33 @@ NatureAttacks PROC USES eax ebx esi edi
 
 	ret
 NatureAttacks ENDP
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;PROC;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;EnemyPROC;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;----------------------------Enemymain
+Enemymain PROC
+	INVOKE EnemyPrint
+	INVOKE EnemyMove
+	INVOKE EnemyAttack
+	ret
+Enemymain ENDP
+;----------------------------EnemyPrint
+EnemyPrint PROC
+
+	ret
+EnemyPrint ENDP
+
+;----------------------------EnemyMove
+EnemyMove PROC
+
+	ret
+EnemyMove ENDP
+
+;----------------------------EnemyAttack
+
+EnemyAttack PROC USES eax ebx esi edi
+
+	ret
+EnemyAttack ENDP
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;PROCEND;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 END main
