@@ -5,11 +5,12 @@ NatureMain PROTO
 NaturePrint PROTO
 NatureMove PROTO
 NatureAttacks PROTO
+NatureBloodLine PROTO
 
 NatureBody STRUCT
 	naturelong BYTE 6
-	x BYTE 5
-	y BYTE 5
+	x BYTE 20
+	y BYTE 20
 	countnaturex BYTE 0
 	blood BYTE 5
 	picture BYTE "(^..^)",0
@@ -34,7 +35,7 @@ EnemyBody STRUCT
 	y BYTE 0
 	countnaturex BYTE 0
 	blood BYTE 5
-	picture BYTE "**",0
+	picture BYTE "V",0
 EnemyBody ENDS
 
 ;韋成改EnemyAttackStruct
@@ -65,7 +66,7 @@ RUNGAME:
 	INVOKE EnemyMain;
 				
 	push eax	;時間暫停術
-	mov eax,0
+	mov eax,1
 	call Delay
 	pop eax
 
@@ -85,15 +86,14 @@ main ENDP
 Naturemain PROC
 	INVOKE NaturePrint
 	INVOKE NatureMove
+	INVOKE NatureBloodLine
 
 	ret
 Naturemain ENDP
 ;----------------------------NaturePrint
 
-NaturePrint PROC USES eax ecx esi edi
+NaturePrint PROC USES eax edx
 
-	push edx
-	push eax
 
 	mov dl,Nature.x
 	mov dh,Nature.y
@@ -101,39 +101,8 @@ NaturePrint PROC USES eax ecx esi edi
 	call SetTextColor
 	;
 	call Gotoxy
-	mov  al , "("
-	call Writechar
-	;
-	add dl,1
-	call Gotoxy
-	mov  al , "^"
-	call Writechar
-	;
-	add dl,1
-	call Gotoxy
-	mov  al , "."
-	call Writechar
-	;
-	add dl,1
-	call Gotoxy
-	mov  al , "."
-	call Writechar
-	;
-	add dl,1
-	call Gotoxy
-	mov  al , "^"
-	call Writechar
-	;
-	add dl,1
-	call Gotoxy
-	mov  al , ")"
-	call Writechar
-	;
-	mov  eax, white + ( black*16 )			;設定前景為白色，背景為黑色
-	call SetTextColor
-
-	pop eax
-	pop edx
+	mov edx, OFFSET Nature.picture
+	call WriteString
 
 	ret
 NaturePrint ENDP
@@ -141,7 +110,7 @@ NaturePrint ENDP
 
 NatureMove PROC USES eax ebx esi edi
 	
-	call readchar
+	;call readchar
 	cmp  eax, 4B00h				;左
 	jz   LEFT
 	cmp  eax, 4D00h				;右
@@ -150,7 +119,7 @@ NatureMove PROC USES eax ebx esi edi
 	jz   UP
 	cmp  eax, 5000h				;下
 	jz   DOWN
-	cmp  eax, 5000h				;空白鍵??????????????????????????????
+	cmp  eax, 0020h				;空白鍵
 	jz	 SPACE
 	jmp NatureMoveEDN
 
@@ -181,6 +150,22 @@ NatureAttacks PROC USES eax ebx esi edi
 
 	ret
 NatureAttacks ENDP
+;----------------------------NatureBloodLine
+
+NatureBloodLine PROC USES ecx eax edx
+	movzx ecx, Nature.blood
+	mov dl, 0		; col
+	mov dh, 0 		; row
+	call Gotoxy
+	bloodLoop:
+		mov  eax, 12 + ( black*16 )			;設定前景為淡紅色，背景為黑色
+		call SetTextColor
+		mov al, 'a'
+		call WriteChar
+		inc dh
+		loop bloodLoop
+	ret
+NatureBloodLine ENDP
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;EnemyPROC;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -188,11 +173,32 @@ NatureAttacks ENDP
 Enemymain PROC
 	INVOKE EnemyPrint
 	INVOKE EnemyMove
-	INVOKE EnemyAttack
+	INVOKE EnemyAttacks
 	ret
 Enemymain ENDP
 ;----------------------------EnemyPrint
-EnemyPrint PROC
+EnemyPrint PROC USES eax edx ebx
+	mov dl, 10
+	mov dh, 0
+	call Gotoxy
+	mov  eax, 10 + ( black*16 )			;設定前景為淡綠色，背景為黑色
+	call SetTextColor
+	mov al, 'V'
+	call WriteChar
+
+	mov dh, Enemy.y
+	inc dh
+	mov Enemy.y, dh
+	cmp dh, 20
+	jz resetY
+	call Gotoxy
+	jmp finalPrint
+	resetY:
+		mov dh, 0
+		mov Enemy.y, dh
+	finalPrint:
+		mov al, '|'
+		call WriteChar
 
 	ret
 EnemyPrint ENDP
@@ -205,9 +211,9 @@ EnemyMove ENDP
 
 ;----------------------------EnemyAttack
 
-EnemyAttack PROC USES eax ebx esi edi
+EnemyAttacks PROC USES eax ebx esi edi
 
 	ret
-EnemyAttack ENDP
+EnemyAttacks ENDP
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;PROCEND;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 END main
