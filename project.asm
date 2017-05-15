@@ -25,13 +25,14 @@ NatureAttackStruct ENDS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;主機宣告END;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;敵機宣告;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 EnemyMain PROTO
-EnemyPrint PROTO
+EnemyPrint PROTO,
+	nowEnemynumber:DWORD
 EnemyMove PROTO
-EnemyAttacks PROTO
+EnemyAttacks PROTO,
+	nowEnemynumber:DWORD
 
 EnemyBody STRUCT
-	enemylong BYTE 2
-	x BYTE 10
+	x BYTE 20
 	y BYTE 0
 	countnaturex BYTE 0
 	blood BYTE 5
@@ -49,9 +50,9 @@ main  EQU start@0 ;
 .data
 Nature NatureBody <>
 Natureattack NatureAttackStruct <>	;韋成改 (主機放出的物質速度)
-Enemy EnemyBody 10 DUP(<>)
+Enemy EnemyBody 10 DUP(<20>,<35>,<28>,<17>,<11>) ;對Enemy的位置做出始化
 Enemyattack EnemyAttackStruct <>;韋成改	(敵機放出的物質速度)
-currentEnemyhavetoprint BYTE 5
+currentEnemyhavetoprint BYTE 5	;螢幕上印出的敵機 (包含死亡的)
 
 .code
 main PROC
@@ -174,32 +175,35 @@ NatureBloodLine ENDP
 Enemymain PROC
 	movzx ecx,currentEnemyhavetoprint
 	mov eax,0
-	;PrintEnemy:					;迴圈 印出多個敵人
-		;mov esi,OFFSET Enemy
-		;add [esi],eax
+	PrintEnemy:					;****迴圈 印出多個敵人****
+		mov esi,OFFSET Enemy
+		add esi,eax
 
 		push eax
-		INVOKE EnemyPrint ;,ADDR (EnemyBody PTR [esi])
+		INVOKE EnemyPrint , eax
 		INVOKE EnemyMove
-		INVOKE EnemyAttacks
+		pop eax
+		push eax
+		INVOKE EnemyAttacks , eax
 		pop eax
 		
 		add eax,6
-	;loop PrintEnemy
+	loop PrintEnemy				;****迴圈 印出多個敵人****
 	ret
 Enemymain ENDP
 ;----------------------------EnemyPrint
-EnemyPrint PROC 
-	;nowEnemy:PTR BYTE
+EnemyPrint PROC,
+	nowEnemynumber:DWORD
 
-
-	mov dl, Enemy.x
+	mov edi,nowEnemynumber	;不這樣做直接放EnemyBody PTR Enemy[nowEnemynumber]會爆掉
+	mov dl, (EnemyBody PTR Enemy[edi]).x
 	mov dh, 0
 	call Gotoxy
 	mov  eax, 10 + ( black*16 )			;設定前景為淡綠色，背景為黑色
 	call SetTextColor
 	mov al, 'V'
 	call WriteChar
+
 
 	ret
 EnemyPrint ENDP
@@ -212,18 +216,20 @@ EnemyMove ENDP
 
 ;----------------------------EnemyAttack
 
-EnemyAttacks PROC
-	
-	mov dh, Enemy.y
+EnemyAttacks PROC,
+	nowEnemynumber:DWORD
+
+	mov edi,nowEnemynumber
+	mov dh, (EnemyBody PTR Enemy[edi]).y
 	inc dh
-	mov Enemy.y, dh
+	mov (EnemyBody PTR Enemy[edi]).y, dh
 	cmp dh, 20
 	jz resetY
 	call Gotoxy
 	jmp finalPrint
 	resetY:
 		mov dh, 0
-		mov Enemy.y, dh
+		mov (EnemyBody PTR Enemy[edi]).y, dh
 		jmp EnemyAttacksEND
 	finalPrint:
 		mov al, '|'
