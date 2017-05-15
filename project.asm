@@ -49,10 +49,10 @@ EnemyAttackStruct ENDS
 main  EQU start@0 ;
 .data
 Nature NatureBody <>
-Natureattack NatureAttackStruct <>	;韋成改 (主機放出的物質速度)
-Enemy EnemyBody 10 DUP(<20>,<35>,<28>,<17>,<11>) ;對Enemy的位置做出始化
-Enemyattack EnemyAttackStruct <>;韋成改	(敵機放出的物質速度)
-currentEnemyhavetoprint BYTE 5	;螢幕上印出的敵機 (包含死亡的)
+Natureattack NatureAttackStruct <>					;韋成改 (主機放出的物質速度)
+Enemy EnemyBody 10 DUP(<20>,<35>,<28>,<17>,<11>) 	;對Enemy的位置做出始化
+Enemyattack EnemyAttackStruct <>					;韋成改	(敵機放出的物質速度)
+currentEnemyhavetoprint BYTE 5						;螢幕上印出的敵機 (包含死亡的)
 
 .code
 main PROC
@@ -67,12 +67,12 @@ RUNGAME:
 	INVOKE EnemyMain;
 	INVOKE NatureMain;
 				
-	push eax	;時間暫停術
+	push eax				;時間暫停術
 	mov eax,100
 	call Delay
 	pop eax
 
-	call clrscr		;清空螢幕
+	call clrscr				;清空螢幕
 
 	jmp RUNGAME
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;執行遊戲(迴圈);;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -97,8 +97,8 @@ Naturemain ENDP
 NaturePrint PROC USES eax edx
 
 
-	mov dl,Nature.x
-	mov dh,Nature.y
+	mov dl, Nature.x
+	mov dh, Nature.y
 	mov  eax, 12 + ( black*16 )			;設定前景為淡紅色，背景為黑色
 	call SetTextColor
 	;
@@ -110,28 +110,29 @@ NaturePrint PROC USES eax edx
 NaturePrint ENDP
 ;----------------------------NatureMove
 
-NatureMove PROC USES eax ebx esi edi
+NatureMove PROC USES eax ebx
 	
-	call readchar
-	cmp  eax, 4B00h				;左
+	call ReadKey				; 偵測是否有鍵盤輸入資料
+	cmp  eax, 4B00h				; 左
 	jz   LEFT
-	cmp  eax, 4D00h				;右
+	cmp  eax, 4D00h				; 右
 	jz   RIGHT
-	cmp  eax, 4800h				;上
-	jz   UP
-	cmp  eax, 5000h				;下
-	jz   DOWN
-	cmp  eax, 0020h				;空白鍵
+	;cmp  eax, 4800h			; 上
+	;jz   UP
+	;cmp  eax, 5000h			; 下
+	;jz   DOWN
+	cmp  eax, 0020h				; 空白鍵
 	jz	 SPACE
+
 	jmp NatureMoveEDN
 
 	SPACE:
 		INVOKE NatureAttacks
 		jmp NatureMoveEDN
-	UP:
-		jmp NatureMoveEDN
-	DOWN:
-		jmp NatureMoveEDN
+	;UP:
+	;	jmp NatureMoveEDN
+	;DOWN:
+	;	jmp NatureMoveEDN
 	LEFT:
 		mov bl,Nature.x
 		mov Nature.countnaturex,-1
@@ -148,7 +149,7 @@ NatureMove PROC USES eax ebx esi edi
 NatureMove ENDP
 ;----------------------------NatureAttack
 
-NatureAttacks PROC USES eax ebx esi edi
+NatureAttacks PROC USES eax ebx
 
 	ret
 NatureAttacks ENDP
