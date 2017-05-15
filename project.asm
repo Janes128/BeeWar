@@ -31,7 +31,7 @@ EnemyAttacks PROTO
 
 EnemyBody STRUCT
 	enemylong BYTE 2
-	x BYTE 5
+	x BYTE 10
 	y BYTE 0
 	countnaturex BYTE 0
 	blood BYTE 5
@@ -49,8 +49,9 @@ main  EQU start@0 ;
 .data
 Nature NatureBody <>
 Natureattack NatureAttackStruct <>	;韋成改 (主機放出的物質速度)
-Enemy EnemyBody <>
+Enemy EnemyBody 10 DUP(<>)
 Enemyattack EnemyAttackStruct <>;韋成改	(敵機放出的物質速度)
+currentEnemyhavetoprint BYTE 5
 
 .code
 main PROC
@@ -62,11 +63,11 @@ mov edx,0
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;執行遊戲(迴圈);;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 RUNGAME:
 
-	INVOKE NatureMain;
 	INVOKE EnemyMain;
+	INVOKE NatureMain;
 				
 	push eax	;時間暫停術
-	mov eax,1
+	mov eax,100
 	call Delay
 	pop eax
 
@@ -110,7 +111,7 @@ NaturePrint ENDP
 
 NatureMove PROC USES eax ebx esi edi
 	
-	;call readchar
+	call readchar
 	cmp  eax, 4B00h				;左
 	jz   LEFT
 	cmp  eax, 4D00h				;右
@@ -171,14 +172,28 @@ NatureBloodLine ENDP
 
 ;----------------------------Enemymain
 Enemymain PROC
-	INVOKE EnemyPrint
-	INVOKE EnemyMove
-	INVOKE EnemyAttacks
+	movzx ecx,currentEnemyhavetoprint
+	mov eax,0
+	;PrintEnemy:					;迴圈 印出多個敵人
+		;mov esi,OFFSET Enemy
+		;add [esi],eax
+
+		push eax
+		INVOKE EnemyPrint ;,ADDR (EnemyBody PTR [esi])
+		INVOKE EnemyMove
+		INVOKE EnemyAttacks
+		pop eax
+		
+		add eax,6
+	;loop PrintEnemy
 	ret
 Enemymain ENDP
 ;----------------------------EnemyPrint
-EnemyPrint PROC USES eax edx ebx
-	mov dl, 10
+EnemyPrint PROC 
+	;nowEnemy:PTR BYTE
+
+
+	mov dl, Enemy.x
 	mov dh, 0
 	call Gotoxy
 	mov  eax, 10 + ( black*16 )			;設定前景為淡綠色，背景為黑色
@@ -186,6 +201,19 @@ EnemyPrint PROC USES eax edx ebx
 	mov al, 'V'
 	call WriteChar
 
+	ret
+EnemyPrint ENDP
+
+;----------------------------EnemyMove
+EnemyMove PROC 
+
+	ret
+EnemyMove ENDP
+
+;----------------------------EnemyAttack
+
+EnemyAttacks PROC
+	
 	mov dh, Enemy.y
 	inc dh
 	mov Enemy.y, dh
@@ -196,23 +224,12 @@ EnemyPrint PROC USES eax edx ebx
 	resetY:
 		mov dh, 0
 		mov Enemy.y, dh
+		jmp EnemyAttacksEND
 	finalPrint:
 		mov al, '|'
 		call WriteChar
 
-	ret
-EnemyPrint ENDP
-
-;----------------------------EnemyMove
-EnemyMove PROC
-
-	ret
-EnemyMove ENDP
-
-;----------------------------EnemyAttack
-
-EnemyAttacks PROC USES eax ebx esi edi
-
+	EnemyAttacksEND:
 	ret
 EnemyAttacks ENDP
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;PROCEND;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
