@@ -31,28 +31,31 @@ EnemyMove PROTO
 EnemyAttacks PROTO,
 	nowEnemynumber:DWORD
 
+;韋成改EnemyAttackStruct
+EnemyAttackStruct STRUCT
+	x BYTE ?
+	y BYTE 0
+	long BYTE 1
+EnemyAttackStruct ENDS
+
 EnemyBody STRUCT
 	x BYTE 20
 	y BYTE 0
 	countnaturex BYTE 0
+	bulletlocation	EnemyAttackStruct <>	;韋成改	(敵機放出攻擊時的位置、EnemyAttacks PROC中的(EnemyBody PTR Enemy[edi]).y
+											;							   調整成(EnemyBody PTR Enemy[edi]).bulletlocation.y 因為EnemyBody.y之後要做成敵人的移動)
 	blood BYTE 5
 	picture BYTE "V",0
 EnemyBody ENDS
 
-;韋成改EnemyAttackStruct
-EnemyAttackStruct STRUCT
-	x BYTE ?
-	y BYTE ?
-	long BYTE 1
-EnemyAttackStruct ENDS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;敵機宣告END;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 main  EQU start@0 ;
 .data
 Nature NatureBody <>
 Natureattack NatureAttackStruct <>					;韋成改 (主機放出的物質速度)
 Enemy EnemyBody 10 DUP(<20>,<35>,<28>,<17>,<11>) 	;對Enemy的位置做出始化
-Enemyattack EnemyAttackStruct <>					;韋成改	(敵機放出的物質速度)
 currentEnemyhavetoprint BYTE 5						;螢幕上印出的敵機 (包含死亡的)
+EnemyBodyhaveSTRUCTnumber DWORD 9
 
 .code
 main PROC
@@ -124,7 +127,7 @@ NatureMove PROC USES eax ebx
 	cmp  eax, 0020h				; 空白鍵
 	jz	 SPACE
 
-	jmp NatureMoveEDN
+	jmp DontMove
 
 	SPACE:
 		INVOKE NatureAttacks
@@ -135,16 +138,18 @@ NatureMove PROC USES eax ebx
 	;	jmp NatureMoveEDN
 	LEFT:
 		mov bl,Nature.x
-		mov Nature.countnaturex,-1
+		mov Nature.countnaturex,-2
 		jmp NatureMoveEDN
 	RIGHT:
 		mov bl,Nature.x
-		mov Nature.countnaturex,1
+		mov Nature.countnaturex,2
 
 	NatureMoveEDN:
 		add bl,Nature.countnaturex
 		mov Nature.x,bl
 		mov Nature.countnaturex,0
+	DontMove:
+
 	ret
 NatureMove ENDP
 ;----------------------------NatureAttack
@@ -157,7 +162,7 @@ NatureAttacks ENDP
 
 NatureBloodLine PROC USES ecx eax edx
 	movzx ecx, Nature.blood
-	mov dl, 0		; col
+	mov dl, 50		; col
 	mov dh, 0 		; row
 	call Gotoxy
 	bloodLoop:
@@ -188,7 +193,7 @@ Enemymain PROC
 		INVOKE EnemyAttacks , eax
 		pop eax
 		
-		add eax,6
+		add eax,EnemyBodyhaveSTRUCTnumber					;EnemyBodyhaveSTRUCTnumber
 	loop PrintEnemy				;****迴圈 印出多個敵人****
 	ret
 Enemymain ENDP
@@ -233,7 +238,7 @@ EnemyAttacks PROC,
 		mov (EnemyBody PTR Enemy[edi]).y, dh
 		jmp EnemyAttacksEND
 	finalPrint:
-		mov al, '|'
+		mov al, '.'
 		call WriteChar
 
 	EnemyAttacksEND:
