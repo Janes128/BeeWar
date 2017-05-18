@@ -6,14 +6,15 @@ NaturePrint PROTO
 NatureMove PROTO
 NatureAttacks PROTO
 NatureBloodLine PROTO
+NatureHitted PROTO
 
-NatureBody STRUCT
+NatureBody STRUCT 							; 主戰機的結構
 	naturelong BYTE 6
 	x BYTE 20
 	y BYTE 20
 	countnaturex BYTE 0
 	blood BYTE 5
-	picture BYTE "(^..^)",0
+	picture BYTE "(^..^)",0 				; 如果用chcp 65001的話，應該可以用這個(^￥^)
 NatureBody ENDS
 
 ;韋成改NatureAttackStruct
@@ -22,48 +23,52 @@ NatureAttackStruct STRUCT
 	y BYTE ?
 	long BYTE 1
 NatureAttackStruct ENDS
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;主機宣告END;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;敵機宣告;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 EnemyMain PROTO
 EnemyPrint PROTO,
-	nowEnemynumber:DWORD
+	nowEnemy:DWORD
 EnemyMove PROTO
 EnemyAttacks PROTO,
-	nowEnemynumber:DWORD
+	nowEnemy:DWORD
 
-;韋成改EnemyAttackStruct
 EnemyAttackStruct STRUCT
-	x BYTE ?
-	y BYTE 0
-	long BYTE 1
+	x 		BYTE ?
+	y 		BYTE 0
+	long 	BYTE 1
+	pic		BYTE "v", 0
 EnemyAttackStruct ENDS
 
 EnemyBody STRUCT
-	x BYTE 20
+	x BYTE ?
 	y BYTE 0
 	countnaturex BYTE 0
-	bulletlocation	EnemyAttackStruct <>	;韋成改	(敵機放出攻擊時的位置、EnemyAttacks PROC中的(EnemyBody PTR Enemy[edi]).y
-											;							   調整成(EnemyBody PTR Enemy[edi]).bulletlocation.y 因為EnemyBody.y之後要做成敵人的移動)
+	;bulletlocation	EnemyAttackStruct <>		;韋成改	(敵機放出攻擊時的位置、EnemyAttacks PROC中的(EnemyBody PTR Enemy[edi]).y
+	;更動0518，將敵機的攻擊結構與主體結構分開	;調整成(EnemyBody PTR Enemy[edi]).bulletlocation.y 因為EnemyBody.y之後要做成敵人的移動)
 	blood BYTE 5
-	picture BYTE "V",0
+	picture BYTE "{\V/}",0 						; 敵機圖形
 EnemyBody ENDS
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;敵機宣告END;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 main  EQU start@0 ;
+Emy_num 	= 5
 .data
-Nature NatureBody <>
-Natureattack NatureAttackStruct <>					;韋成改 (主機放出的物質速度)
-Enemy EnemyBody 10 DUP(<20>,<35>,<28>,<17>,<11>) 	;對Enemy的位置做出始化
-currentEnemyhavetoprint BYTE 5						;螢幕上印出的敵機 (包含死亡的)
-EnemyBodyhaveSTRUCTnumber DWORD 9
+
+Nature 		NatureBody 			<>
+na_bullet 	NatureAttackStruct 	<>										;子彈設定
+Enemy 		EnemyBody 			Emy_num DUP(<20>,<35>,<28>,<15>,<8>) 	;對Enemy的位置做出始化
+Emy_bullet	EnemyAttackStruct 	Emy_num DUP(<20>,<35>,<28>,<15>,<8>) 	; 設定敵機子彈(先每一台敵機一枚子彈)
+EmyNum 		BYTE	Emy_num												;螢幕上印出的敵機 (包含死亡的)
 
 .code
 main PROC
 
-mov eax,0
-mov ebx,0
-mov ecx,0
-mov edx,0
+xor eax, eax 				; set register 0
+xor ebx, ebx
+xor ecx, ecx
+xor edx, edx
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;執行遊戲(迴圈);;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 RUNGAME:
 
@@ -120,10 +125,6 @@ NatureMove PROC USES eax ebx
 	jz   LEFT
 	cmp  eax, 4D00h				; 右
 	jz   RIGHT
-	;cmp  eax, 4800h			; 上
-	;jz   UP
-	;cmp  eax, 5000h			; 下
-	;jz   DOWN
 	cmp  eax, 0020h				; 空白鍵
 	jz	 SPACE
 
@@ -132,10 +133,6 @@ NatureMove PROC USES eax ebx
 	SPACE:
 		INVOKE NatureAttacks
 		jmp NatureMoveEDN
-	;UP:
-	;	jmp NatureMoveEDN
-	;DOWN:
-	;	jmp NatureMoveEDN
 	LEFT:
 		mov bl,Nature.x
 		mov Nature.countnaturex,-2
@@ -168,48 +165,49 @@ NatureBloodLine PROC USES ecx eax edx
 	bloodLoop:
 		mov  eax, 12 + ( black*16 )			;設定前景為淡紅色，背景為黑色
 		call SetTextColor
-		mov al, 'a'
+		mov al, 'a' 							; 印出愛心形狀
 		call WriteChar
 		inc dh
 		loop bloodLoop
 	ret
 NatureBloodLine ENDP
 
+;----------------------------NatureHitted
+
+NatureHitted PROC 
+
+NatureHitted ENDP
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;EnemyPROC;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;----------------------------Enemymain
-Enemymain PROC
-	movzx ecx,currentEnemyhavetoprint
-	mov eax,0
-	PrintEnemy:					;****迴圈 印出多個敵人****
-		mov esi,OFFSET Enemy
-		add esi,eax
-
-		push eax
-		INVOKE EnemyPrint , eax
+Enemymain PROC USES ecx esi edi
+	movzx ecx, EmyNum
+	xor esi, esi 							; esi指的是敵機的編號，從0開始編號
+	xor edi, edi 							; edi指的是敵機子彈的編號，從零開始
+	PrintEnemy:								;****迴圈 印出多個敵人****
+		INVOKE EnemyPrint , esi
 		INVOKE EnemyMove
-		pop eax
-		push eax
-		INVOKE EnemyAttacks , eax
-		pop eax
+
+		INVOKE EnemyAttacks , edi 			; print敵機的子彈
 		
-		add eax,EnemyBodyhaveSTRUCTnumber					;EnemyBodyhaveSTRUCTnumber
-	loop PrintEnemy				;****迴圈 印出多個敵人****
+		add esi, TYPE Enemy
+		add edi, TYPE Emy_bullet
+	loop PrintEnemy							;****迴圈 印出多個敵人****
 	ret
 Enemymain ENDP
 ;----------------------------EnemyPrint
-EnemyPrint PROC,
-	nowEnemynumber:DWORD
+EnemyPrint PROC USES edi edx eax,
+	nowEnemy:DWORD
 
-	mov edi,nowEnemynumber	;不這樣做直接放EnemyBody PTR Enemy[nowEnemynumber]會爆掉
-	mov dl, (EnemyBody PTR Enemy[edi]).x
-	mov dh, 0
+	mov edi, nowEnemy						;不這樣做直接放EnemyBody PTR Enemy[nowEnemynumber]會爆掉
+	mov dl,((EnemyBody PTR Enemy[edi]).x) 	; 敵機的位置(編號edi的敵機)
+	add dl, -2								; -2 為了調整圖片到圖片的中央
+	mov dh, 0 								; row 
 	call Gotoxy
-	mov  eax, 10 + ( black*16 )			;設定前景為淡綠色，背景為黑色
+	mov  eax, 10 + ( black*16 )				;設定前景為淡綠色，背景為黑色
 	call SetTextColor
-	mov al, 'V'
-	call WriteChar
-
+	mov edx, OFFSET Enemy.picture
+	call WriteString
 
 	ret
 EnemyPrint ENDP
@@ -222,23 +220,26 @@ EnemyMove ENDP
 
 ;----------------------------EnemyAttack
 
-EnemyAttacks PROC,
-	nowEnemynumber:DWORD
+EnemyAttacks PROC USES edi edx eax,
+	nowEnemy:DWORD
 
-	mov edi,nowEnemynumber
-	mov dh, (EnemyBody PTR Enemy[edi]).y
+	mov edi, nowEnemy
+	mov dl, (EnemyAttackStruct PTR Emy_bullet[edi]).x 		; 設定子彈x軸的位置，可以與敵機X軸做同步的動作(目前沒有)
+	mov dh, (EnemyAttackStruct PTR Emy_bullet[edi]).y 		; original: (EnemyBody PTR Enemy[edi]).y
 	inc dh
-	mov (EnemyBody PTR Enemy[edi]).y, dh
+	mov (EnemyAttackStruct PTR Emy_bullet[edi]).y, dh
+	
+	; 這裡做主戰機被打到的判定
 	cmp dh, 20
 	jz resetY
 	call Gotoxy
 	jmp finalPrint
 	resetY:
 		mov dh, 0
-		mov (EnemyBody PTR Enemy[edi]).y, dh
+		mov (EnemyAttackStruct PTR Emy_bullet[edi]).y, dh
 		jmp EnemyAttacksEND
 	finalPrint:
-		mov al, '.'
+		mov al, 'v'
 		call WriteChar
 
 	EnemyAttacksEND:
