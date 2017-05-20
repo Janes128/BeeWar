@@ -1,11 +1,19 @@
 INCLUDE Irvine32.inc
 
+; 地圖結構
+Map STRUCT
+	top		BYTE	0
+	left	BYTE 	0
+	right 	BYTE 	60
+	buttom 	BYTE 	20
+Map ENDS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;主機宣告;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 NatureMain PROTO
 NaturePrint PROTO
 NatureMove PROTO
 NatureAttacks PROTO
-NatureBloodLine PROTO
+NatureBloodLine PROTO,
+	nowBlood: DWORD
 NatureHitted PROTO
 
 NatureBody STRUCT 							; 主戰機的結構
@@ -13,8 +21,8 @@ NatureBody STRUCT 							; 主戰機的結構
 	x BYTE 20
 	y BYTE 20
 	countnaturex BYTE 0
-	blood BYTE 5
-	picture BYTE "(^..^)",0 				; 如果用chcp 65001的話，應該可以用這個(^￥^)
+	blood DWORD 5
+	picture BYTE "(^Y^)",0 				; 如果用chcp 65001的話，應該可以用這個(^￥^)
 NatureBody ENDS
 
 ;韋成改NatureAttackStruct
@@ -96,16 +104,15 @@ main ENDP
 Naturemain PROC
 	INVOKE NaturePrint
 	INVOKE NatureMove
-	INVOKE NatureBloodLine
+	INVOKE NatureBloodLine, Nature.blood
 
 	ret
 Naturemain ENDP
 ;----------------------------NaturePrint
 
 NaturePrint PROC USES eax edx
-
-
 	mov dl, Nature.x
+	add dl, -2 							;重新設定主機位置，中間位置在'Y'的部分
 	mov dh, Nature.y
 	mov  eax, 12 + ( black*16 )			;設定前景為淡紅色，背景為黑色
 	call SetTextColor
@@ -157,8 +164,10 @@ NatureAttacks PROC USES eax ebx
 NatureAttacks ENDP
 ;----------------------------NatureBloodLine
 
-NatureBloodLine PROC USES ecx eax edx
-	movzx ecx, Nature.blood
+NatureBloodLine PROC USES ecx eax edx,
+	nowBlood: DWORD
+	mov ecx, nowBlood
+	mov Nature.blood, ecx
 	mov dl, 50		; col
 	mov dh, 0 		; row
 	call Gotoxy
@@ -220,7 +229,7 @@ EnemyMove ENDP
 
 ;----------------------------EnemyAttack
 
-EnemyAttacks PROC USES edi edx eax,
+EnemyAttacks PROC USES edi edx eax ecx,
 	nowEnemy:DWORD
 
 	mov edi, nowEnemy
@@ -230,6 +239,12 @@ EnemyAttacks PROC USES edi edx eax,
 	mov (EnemyAttackStruct PTR Emy_bullet[edi]).y, dh
 	
 	; 這裡做主戰機被打到的判定
+	.IF (dl == Nature.x) && (dh == Nature.y)
+		mov ecx, Nature.blood 
+		dec ecx
+		INVOKE NatureBloodLine, ecx
+	.ENDIF
+	; 子彈到底的判定，就要再重新打一次
 	cmp dh, 20
 	jz resetY
 	call Gotoxy
