@@ -53,8 +53,6 @@ EnemyBody STRUCT
 	x BYTE ?
 	y BYTE 0
 	countnaturex BYTE 0
-	;bulletlocation	EnemyAttackStruct <>		;韋成改	(敵機放出攻擊時的位置、EnemyAttacks PROC中的(EnemyBody PTR Enemy[edi]).y
-	;更動0518，將敵機的攻擊結構與主體結構分開	;調整成(EnemyBody PTR Enemy[edi]).bulletlocation.y 因為EnemyBody.y之後要做成敵人的移動)
 	blood BYTE 5
 	picture BYTE "{\V/}",0 						; 敵機圖形
 EnemyBody ENDS
@@ -67,8 +65,9 @@ Emy_num 	= 5
 Nature 		NatureBody 			<>
 na_bullet 	NatureAttackStruct 	<>										;子彈設定
 Enemy 		EnemyBody 			Emy_num DUP(<20>,<35>,<28>,<15>,<8>) 	;對Enemy的位置做出始化
-Emy_bullet	EnemyAttackStruct 	Emy_num DUP(<20>,<35>,<28>,<15>,<8>) 	; 設定敵機子彈(先每一台敵機一枚子彈)
+Emy_bullet	EnemyAttackStruct 	Emy_num DUP(<>,<>,<>,<>,<>) 	; 設定敵機子彈(先每一台敵機一枚子彈)
 EmyNum 		BYTE	Emy_num												;螢幕上印出的敵機 (包含死亡的)
+GameOver 	BYTE	"Game Over!", 0
 
 .code
 main PROC
@@ -168,9 +167,18 @@ NatureBloodLine PROC USES ecx eax edx,
 	nowBlood: DWORD
 	mov ecx, nowBlood
 	mov Nature.blood, ecx
+	;cmp ecx, 0
+	;jz gameoverL
 	mov dl, 50		; col
 	mov dh, 0 		; row
 	call Gotoxy
+	;jmp bloodLoop
+	;gameoverL: 								; 若血條沒有了，就印出GameOver吧
+	;	mov  eax, 10 + ( black*16 )			;設定前景為淡綠色，背景為黑色
+	;	call SetTextColor
+	;	movzx edx, GameOver
+	;	call WriteString
+	;	jmp endOfBlood
 	bloodLoop:
 		mov  eax, 12 + ( black*16 )			;設定前景為淡紅色，背景為黑色
 		call SetTextColor
@@ -178,7 +186,8 @@ NatureBloodLine PROC USES ecx eax edx,
 		call WriteChar
 		inc dh
 		loop bloodLoop
-	ret
+	endOfBlood:
+		ret
 NatureBloodLine ENDP
 
 ;----------------------------NatureHitted
@@ -200,7 +209,7 @@ Enemymain PROC USES ecx esi edi
 		INVOKE EnemyAttacks , edi 			; print敵機的子彈
 		
 		add esi, TYPE Enemy
-		add edi, TYPE Emy_bullet
+		add edi, TYPE Enemy
 	loop PrintEnemy							;****迴圈 印出多個敵人****
 	ret
 Enemymain ENDP
@@ -229,29 +238,44 @@ EnemyMove ENDP
 
 ;----------------------------EnemyAttack
 
-EnemyAttacks PROC USES edi edx eax ecx,
+EnemyAttacks PROC USES edi eax ebx ecx edx,
 	nowEnemy:DWORD
 
 	mov edi, nowEnemy
-	mov dl, (EnemyAttackStruct PTR Emy_bullet[edi]).x 		; 設定子彈x軸的位置，可以與敵機X軸做同步的動作(目前沒有)
-	mov dh, (EnemyAttackStruct PTR Emy_bullet[edi]).y 		; original: (EnemyBody PTR Enemy[edi]).y
+
+	mov al, (EnemyAttackStruct PTR Emy_bullet[edi]).x       ; 設定子彈x軸的位置，可以與敵機X軸做同步的動作(完成)
+	.IF (al == 0)
+        mov al, (EnemyBody PTR Enemy[edi]).x
+    .ENDIF
+	mov dl, al
+
+	;mov dh, (EnemyAttackStruct PTR Emy_bullet[edi]).y 		; 設定子彈y軸位置，可以與敵機y軸做同步(完成)
+	mov ah, (EnemyAttackStruct PTR Emy_bullet[edi]).y
+	.IF(ah == 0)
+        mov ah, (EnemyBody PTR Enemy[edi]).y
+    .ENDIF
+    mov dh, ah
 	inc dh
 	mov (EnemyAttackStruct PTR Emy_bullet[edi]).y, dh
-	
+
 	; 這裡做主戰機被打到的判定
 	.IF (dl == Nature.x) && (dh == Nature.y)
-		mov ecx, Nature.blood 
+		mov ecx, Nature.blood
 		dec ecx
 		INVOKE NatureBloodLine, ecx
 	.ENDIF
 	; 子彈到底的判定，就要再重新打一次
 	cmp dh, 20
-	jz resetY
+	jz resetXY
 	call Gotoxy
 	jmp finalPrint
-	resetY:
-		mov dh, 0
+	resetXY:
+        mov dl, 0                                                  ;子彈x座標歸零
+        mov (EnemyAttackStruct PTR Emy_bullet[edi]).x, dl
+        mov al, 0
+		mov dh, 0                                                  ;子彈y座標歸零
 		mov (EnemyAttackStruct PTR Emy_bullet[edi]).y, dh
+		mov ah, 0
 		jmp EnemyAttacksEND
 	finalPrint:
 		mov al, 'v'
