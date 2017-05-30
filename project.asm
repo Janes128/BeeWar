@@ -22,7 +22,6 @@ NatureBody STRUCT 						; 主戰機的結構
 	color			DWORD 	12
 NatureBody ENDS
 
-;NatureAttackStruct
 NatureAttackStruct STRUCT
 	x BYTE ?
 	y BYTE ?
@@ -34,7 +33,8 @@ NatureAttackStruct ENDS
 EnemyMain PROTO
 EnemyPrint PROTO,
 	nowEnemy:DWORD
-EnemyMove PROTO
+EnemyMove PROTO,
+	nowEnemy:DWORD
 EnemyAttacks PROTO,
 	nowEnemy:DWORD
 
@@ -63,6 +63,7 @@ na_bullet 	NatureAttackStruct 	<>										;子彈設定
 Enemy 		EnemyBody 			Emy_num DUP(<20>,<34>,<60>,<114>,<50>) 	;對Enemy的位置做出始化，注意：一定要是二的倍數
 Emy_bullet	EnemyAttackStruct 	Emy_num DUP(<>,<>,<>,<>,<>) 			; 設定敵機子彈(先每一台敵機一枚子彈)
 EmyNum 		BYTE	Emy_num												;螢幕上印出的敵機 (包含死亡的)
+randVal     DWORD   ?
 ;print data
 GameOver 	BYTE	"Game Over!", 0
 NatureLife	BYTE 	"Nature Life: ", 0
@@ -240,23 +241,38 @@ Enemymain PROC USES ecx esi edi
 	xor edi, edi 							; edi指的是敵機子彈的編號，從零開始
 	PrintEnemy:								;****迴圈 印出多個敵人****
 		INVOKE EnemyPrint , esi
-		INVOKE EnemyMove
+		push ecx
+		push esi
+		push edi
+		push edx
+		push ebx
+		push eax
+		INVOKE EnemyMove , esi
+		pop eax
+		pop ebx
+		pop edx
+		pop edi
+		pop esi
+		pop ecx
 
-		INVOKE EnemyAttacks , edi 			; print敵機的子彈
-		
-		add esi, TYPE Enemy
-		add edi, TYPE Enemy
+	    INVOKE EnemyAttacks , edi 			; print敵機的子彈
+
+		add esi, TYPE EnemyBody
+		add edi, TYPE EnemyAttackStruct
 	loop PrintEnemy							;****迴圈 印出多個敵人****
+
 	ret
 Enemymain ENDP
 ;----------------------------EnemyPrint
-EnemyPrint PROC USES edi edx eax,
+EnemyPrint PROC USES edi edx eax esi,
 	nowEnemy:DWORD
 
+	mov edx,0
 	mov edi, nowEnemy						;不這樣做直接放EnemyBody PTR Enemy[nowEnemynumber]會爆掉
-	mov dl,((EnemyBody PTR Enemy[edi]).x) 	; 敵機的位置(編號edi的敵機)
+	mov dl,((EnemyBody PTR Enemy[esi]).x) 	; 敵機的位置(編號edi的敵機)
+
 	add dl, -2								; -2 為了調整圖片到圖片的中央
-	mov dh,((EnemyBody PTR Enemy[edi]).y) 	; row 
+	mov dh,((EnemyBody PTR Enemy[esi]).y) 	; row 
 	call Gotoxy
 	mov  eax, 10 + ( black*16 )				;設定前景為淡綠色，背景為黑色
 	call SetTextColor
@@ -267,7 +283,75 @@ EnemyPrint PROC USES edi edx eax,
 EnemyPrint ENDP
 
 ;----------------------------EnemyMove
-EnemyMove PROC 
+EnemyMove PROC USES edi eax ebx ecx edx esi,
+	nowEnemy:DWORD
+
+	mov edi,nowEnemy
+	movzx ecx, EmyNum
+
+	mov eax,4				;;隨機-1~1數字 (讓敵機移動)
+	call RandomRange
+	mov randVal,eax
+
+	.IF (eax == 2)
+	 mov randVal,-1
+	.ENDIF
+	.IF (eax == 3)
+	 mov randVal,0
+	.ENDIF
+
+	movzx eax,((EnemyBody PTR Enemy[edi]).x)	;;讓敵機位置加上x
+	add eax,randVal
+	mov esi,0
+
+
+	testrange:				;;測試如果加了變數的x是否會和其他敵機重疊
+	push eax
+	movzx ebx,((EnemyBody PTR Enemy[esi]).x)
+	.IF (edi == esi)
+	 jmp goahead
+	.ENDIF
+	;互減來判斷距離
+	neg ebx
+	add eax,ebx
+	mov edx,5
+
+	cmp eax,edx				;;比較距離是否在-5~5之間 如果是則不能移動 跳到cantmove
+	JG  goahead
+	neg edx
+	cmp eax,edx
+	JG  cantmove
+
+	goahead:
+	pop eax
+	add esi, TYPE Enemy
+	loop testrange			;;結束testrange測試
+
+
+
+	.IF (eax <= 1)			;;先判斷是否有超出界線 如果沒有則可以設定敵機新位置
+	 jmp cantmove
+	.ENDIF
+	.IF (eax >= 40)
+	 jmp cantmove
+	.ENDIF
+	mov ((EnemyBody PTR Enemy[edi]).x),al
+
+	cantmove:
+
+	mov eax,10				;;設定敵機的y是否要往下移動  給定隨機變數0~9 如果等於2則敵機會往下移動
+	call RandomRange
+	mov randVal,eax
+	mov randVal,0
+
+	.IF (eax == 2)
+	 mov randVal,1
+	.ENDIF
+	;;
+	mov eax,0
+	mov al,((EnemyBody PTR Enemy[edi]).y)
+	add eax,randVal
+	mov ((EnemyBody PTR Enemy[edi]).y),al
 
 	ret
 EnemyMove ENDP
