@@ -6,11 +6,48 @@ TITLE assembly language final project NatureWar
 ;update: 2017/06/01
 ;----------------------------------------------------------
 
+<<<<<<< HEAD
 INCLUDE Irvine32.inc
 INCLUDE MainDec.inc
 INCLUDE NatureDec.inc 		; the declaration of Nature
 INCLUDE EnemyDec.inc 		; the declaration of Enemy
 INCLUDE MenuDec.inc
+=======
+NatureMain PROTO
+NaturePrint PROTO,
+	color: DWORD
+NatureMove PROTO
+NatureAttacks PROTO
+NatureBloodLine PROTO,
+	nowBlood: DWORD
+NatureHitted PROTO
+
+NatureBody STRUCT 						; 主戰機的結構
+	naturelong 		BYTE 	6
+	x 				BYTE 	50
+	y 				BYTE 	25 			; the same with MapButtom
+	countnaturex 	BYTE 	0
+	blood 			DWORD 	5
+	picture 		BYTE 	"(^Y^)",0 	; 如果用chcp 65001的話，應該可以用這個(^￥^)
+	color			DWORD 	12
+NatureBody ENDS
+
+NatureAttackStruct STRUCT
+	x BYTE ?
+	y BYTE ?
+	long BYTE 1
+NatureAttackStruct ENDS
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;主機宣告END;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;敵機宣告;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+EnemyMain PROTO
+EnemyPrint PROTO,
+	nowEnemy:DWORD
+EnemyMove PROTO,
+	nowEnemy:DWORD
+EnemyAttacks PROTO,
+	nowEnemy:DWORD
+>>>>>>> origin/main
 
 main  EQU start@0 ;
 Emy_num 	= 5
@@ -32,10 +69,15 @@ Nature 		NatureBody 			<>
 na_bullet 	NatureAttackStruct 	<>										;子彈設定
 Enemy 		EnemyBody 			Emy_num DUP(<20>,<34>,<60>,<114>,<50>) 	;對Enemy的位置做出始化，注意：一定要是二的倍數
 Emy_bullet	EnemyAttackStruct 	Emy_num DUP(<>,<>,<>,<>,<>) 			; 設定敵機子彈(先每一台敵機一枚子彈)
+<<<<<<< HEAD
 EmyNum 		BYTE	Emy_num												; 敵機數量												;螢幕上印出的敵機 (包含死亡的)
 randVal     DWORD   ?
 mapSize 	COORD 				<120, 30> 								; 視窗畫面設定尺寸
 outputHandle DWORD				0										; 設定輸出型態
+=======
+EmyNum 		BYTE	Emy_num												;螢幕上印出的敵機 (包含死亡的)
+randVal     DWORD   ?
+>>>>>>> origin/main
 ;print data
 GameOver 	BYTE	"Game Over!", 0
 NatureLife	BYTE 	"Nature Life: ", 0
@@ -454,7 +496,11 @@ Enemymain PROC USES ecx esi edi
 		push edx
 		push ebx
 		push eax
+<<<<<<< HEAD
 		INVOKE EnemyMove, esi
+=======
+		INVOKE EnemyMove , esi
+>>>>>>> origin/main
 		pop eax
 		pop ebx
 		pop edx
@@ -462,21 +508,31 @@ Enemymain PROC USES ecx esi edi
 		pop esi
 		pop ecx
 
+<<<<<<< HEAD
 		INVOKE EnemyAttacks , edi 			; print敵機的子彈
 		
 		add esi, TYPE Enemy
 		add edi, TYPE Enemy
+=======
+	    INVOKE EnemyAttacks , edi 			; print敵機的子彈
+
+		add esi, TYPE EnemyBody
+		add edi, TYPE EnemyAttackStruct
+>>>>>>> origin/main
 	loop PrintEnemy							;****迴圈 印出多個敵人****
+
 	ret
 Enemymain ENDP
 ;----------------------------EnemyPrint
-EnemyPrint PROC USES edi edx eax,
+EnemyPrint PROC USES edi edx eax esi,
 	nowEnemy:DWORD
 
+	mov edx,0
 	mov edi, nowEnemy						;不這樣做直接放EnemyBody PTR Enemy[nowEnemynumber]會爆掉
-	mov dl,((EnemyBody PTR Enemy[edi]).x) 	; 敵機的位置(編號edi的敵機)
+	mov dl,((EnemyBody PTR Enemy[esi]).x) 	; 敵機的位置(編號edi的敵機)
+
 	add dl, -2								; -2 為了調整圖片到圖片的中央
-	mov dh,((EnemyBody PTR Enemy[edi]).y) 	; row 
+	mov dh,((EnemyBody PTR Enemy[esi]).y) 	; row 
 	call Gotoxy
 	mov  eax, 10 + ( black*16 )				;設定前景為淡綠色，背景為黑色
 	call SetTextColor
